@@ -3,6 +3,7 @@
 import arcpy
 import datetime
 from sys import exit
+arcpy.env.overwriteOutput = True
 
 #Get file and create search cursor from it
 InputFile = 'data/2014-07 - Citi Bike trip data.csv'
@@ -10,11 +11,14 @@ fields = ['starttime', 'start station latitude', 'start station longitude',\
  'end station latitude', 'end station longitude', 'stoptime']
 cursor = arcpy.SearchCursor(InputFile, fields)
 
+#Create lists to be used later
 fc = []
 hr = []
 hr2 = []
 minutes = []
 minutes2 = []
+cutpoints = []
+failcount = 0
 
 for row in cursor:
     #get the coordinates of the start and end
@@ -35,6 +39,14 @@ for row in cursor:
 
     #Put them in a fc
     fc.append(tripline)
+
+    #Try to find the midpoint and store it in a list
+    try:
+        midpoint = tripline.positionAlongLine(0.50, True)
+        cutpoints.append(midpoint)
+    except:
+        failcount += 1
+        print failcount
 
     #Put start hour in a list
     values = row.getValue('starttime'), #somehow that comma matters
@@ -57,25 +69,25 @@ for row in cursor:
     minute2 = date2.minute
     minutes2.append(minute2)
 
-    #End at day 2
-    if date.day == 2:
+    #End at 7am
+    if date.hour == 7:
         break
-
 
 output = 'Data/Output.gdb/output'
 
+#Create dataset to put fc in
 try:
-    #Create dataset to put fc in
     arcpy.CreateFileGDB_management("Data", "Output.gdb")
-
-    #Put the fc in the dataset
-    arcpy.CopyFeatures_management(fc, output)
-
-    #Proejct the fc in the dataset
-    arcpy.DefineProjection_management(output, 32662)
-
 except:
     'Error with creating GDB'
+
+#Put the fc and midpoints in the dataset
+arcpy.CopyFeatures_management(fc, output)
+arcpy.CopyFeatures_management(cutpoints, 'Data/Output.gdb/outputPoints')
+
+#Project the fc in the dataset
+arcpy.DefineProjection_management(output, 32662)
+
 
 arcpy.env.workspace = 'Data/Output.gdb'
 
