@@ -82,12 +82,18 @@ for row in cursor:
 #Clear Curse of the Lock of the Cursor
 del inscursor
 
-#Make a tracking layer of the points
-filename = 'TrackLines'
+#Put properties of trips to line features
+filename = 'Lines'
 arcpy.TrackIntervalsToLine_ta(pointfc,filename,"Time","TrackID","#",\
 "01043-Dutch_(Netherlands)","#","#","KILOMETERS","Distance_KM_Time","MINUTES",\
 "Duration_MIN_Time","KILOMETERS_PER_HOUR","Speed_KPH_Time","DEGREES",\
 "Course_DEG_Time")
+
+#Make it a tracking layer
+lines = 'Data/Tracking.gdb/Lines'
+arcpy.MakeTrackingLayer_ta(lines,"TrackLines","Eastern_Standard_Time",\
+"ADJUSTED_FOR_DST","COPY_ALL_TO_MEMORY","Start_Time","#",\
+"01043-Dutch_(Netherlands)","#","#","Track_ID")
 
 del cursor, row
 
