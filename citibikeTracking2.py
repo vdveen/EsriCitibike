@@ -9,6 +9,12 @@ import datetime
 from sys import exit
 arcpy.env.overwriteOutput = True
 
+#Warning if TA isn't available
+if arcpy.CheckOutExtension('Tracking') == 'CheckedOut':
+    pass
+else:
+    exit('Tracking Analyst License not available')
+
 #Define spatial reference
 sr = arcpy.SpatialReference(4326)
 arcpy.env.outputCoordinateSystem = sr #just to be sure
@@ -65,14 +71,24 @@ for row in cursor:
     inscursor.insertRow([end,enddate,count])
 
     #Counter
-    if count % 100:
+    if count % 100 == 0:
         print 'Count: ' + str(count)
 
     #End at 7am as test sample
-    if startdate.hour == 3:
+    if startdate.hour == 9:
         print 'Total Count: ' + str(count)
         break
 
-del cursor, inscursor, row
+#Clear Curse of the Lock of the Cursor
+del inscursor
+
+#Make a tracking layer of the points
+filename = 'TrackLines'
+arcpy.TrackIntervalsToLine_ta(pointfc,filename,"Time","TrackID","#",\
+"01043-Dutch_(Netherlands)","#","#","KILOMETERS","Distance_KM_Time","MINUTES",\
+"Duration_MIN_Time","KILOMETERS_PER_HOUR","Speed_KPH_Time","DEGREES",\
+"Course_DEG_Time")
+
+del cursor, row
 
 print 'Done now'
