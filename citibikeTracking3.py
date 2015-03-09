@@ -119,39 +119,42 @@ fields2 = ['SHAPE@','Time', 'TrackID']
 inscursor = arcpy.da.InsertCursor(pointfc2, fields2)
 
 #The distance interval of the new points on the trip line
-splitDistance = 1000
+splitDistance = 0.001
 
 trackID = 0
 
 #Function to take that distance and interpolate points with the row information
-def Interpolator3000():
+def Interpolator3000(lineobj,starttime,endtime):
     #Total and current length
     length = lineobj.length
     currentLength = 0
-    #trackID += 1
+    global trackID
+    trackID += 1
 
-    #Make a point every 1km and interpolate the time
+    #Insert the first point
+    inscursor.insertRow([lineobj.firstPoint,starttime,trackID])
+
+    whilecounter = 1
+    #Make a point every ~100m and interpolate the time
     while currentLength < length:
 
         #Make point along line
-        percentageOfLine = (currentLength / splitDistance)
+        percentageOfLine = (currentLength / length)
         point = lineobj.positionAlongLine(percentageOfLine,'True')
 
         #Get time of that point
-        if currentLength == 0:
-            pointtime = starttime
-        else:
-
-            timedelta = endtime - starttime
-            pointtime = starttime + (timedelta * percentageOfLine)
+        timedelta = endtime - starttime
+        pointtime = starttime + ((timedelta * int(percentageOfLine*1000))/1000)
 
         #Insert row and update the trackID and length counters
-        inscursor.insertRow(point, pointtime, trackID)
+        inscursor.insertRow([point, pointtime, trackID])
         currentLength += splitDistance
+        whilecounter += 1
 
-    #Add endpoint here
-    ##TODO
+        print currentLength, timedelta, pointtime.minute
 
+    #Insert the last point
+    inscursor.insertRow([lineobj.lastPoint,endtime,trackID])
 
 
 #Go through the search cursor, interpolate, and save to the new points fc
@@ -163,9 +166,9 @@ for row in cursor:
     duration = row[3]
 
     #Add the interpolated points with the function
-    Interpolator3000()
+    Interpolator3000(lineobj,starttime,endtime)
 
-
+del inscursor,cursor
 print 'Done now'
 
 
