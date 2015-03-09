@@ -118,12 +118,55 @@ arcpy.AddField_management(pointfc2, 'TrackID', 'FLOAT')
 fields2 = ['SHAPE@','Time', 'TrackID']
 inscursor = arcpy.da.InsertCursor(pointfc2, fields2)
 
+#The distance interval of the new points on the trip line
+splitDistance = 1000
+
+trackID = 0
+
+#Function to take that distance and interpolate points with the row information
+def Interpolator3000():
+    #Total and current length
+    length = lineobj.length
+    currentLength = 0
+    #trackID += 1
+
+    #Make a point every 1km and interpolate the time
+    while currentLength < length:
+
+        #Make point along line
+        percentageOfLine = (currentLength / splitDistance)
+        point = lineobj.positionAlongLine(percentageOfLine,'True')
+
+        #Get time of that point
+        if currentLength == 0:
+            pointtime = starttime
+        else:
+
+            timedelta = endtime - starttime
+            pointtime = starttime + (timedelta * percentageOfLine)
+
+        #Insert row and update the trackID and length counters
+        inscursor.insertRow(point, pointtime, trackID)
+        currentLength += splitDistance
+
+    #Add endpoint here
+    ##TODO
+
+
+
 #Go through the search cursor, interpolate, and save to the new points fc
 for row in cursor:
+    #Get info from cursor row
     lineobj = row[0]
     starttime = row[1]
     endtime = row[2]
     duration = row[3]
 
+    #Add the interpolated points with the function
+    Interpolator3000()
+
 
 print 'Done now'
+
+
+
