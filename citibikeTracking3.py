@@ -77,11 +77,11 @@ for row in cursor:
         print 'Count: ' + str(count)
 
     #End at 7am as test sample
-    if startdate.hour == 1:
+    if startdate.hour == 9:
         print 'Total Count: ' + str(count)
         break
 
-#Clear Curse of the Lock of the Cursor
+#Clear stuff
 del inscursor, cursor, row
 
 #Put properties of trips to line features with Tracking Analyst
@@ -131,9 +131,6 @@ def Interpolator3000(lineobj,starttime,endtime):
     global trackID
     trackID += 1
 
-    #Insert the first point
-    inscursor.insertRow([lineobj.firstPoint,starttime,trackID])
-
     whilecounter = 1
     #Make a point every ~100m and interpolate the time
     while currentLength < length:
@@ -150,8 +147,8 @@ def Interpolator3000(lineobj,starttime,endtime):
         inscursor.insertRow([point, pointtime, trackID])
         currentLength += splitDistance
         whilecounter += 1
-
-        print currentLength, timedelta, pointtime.minute
+        if whilecounter % 100 == 0:
+            print 'Interpolated ' + whilecounter + 'points'
 
     #Insert the last point
     inscursor.insertRow([lineobj.lastPoint,endtime,trackID])
